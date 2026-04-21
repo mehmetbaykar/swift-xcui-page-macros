@@ -1,0 +1,24 @@
+{
+      "configurations": [
+            {
+                  "type": "swift",
+                  "request": "launch",
+                  "args": [],
+                  "cwd": "${workspaceFolder:swift-xcui-page-macros}",
+                  "name": "Debug swift-xcui-page-macros",
+                  "target": "swift-xcui-page-macros",
+                  "configuration": "debug",
+                  "preLaunchTask": "swift: Build Debug swift-xcui-page-macros"
+            },
+            {
+                  "type": "swift",
+                  "request": "launch",
+                  "args": [],
+                  "cwd": "${workspaceFolder:swift-xcui-page-macros}",
+                  "name": "Release swift-xcui-page-macros",
+                  "target": "swift-xcui-page-macros",
+                  "configuration": "release",
+                  "preLaunchTask": "swift: Build Release swift-xcui-page-macros"
+            }
+      ]
+}

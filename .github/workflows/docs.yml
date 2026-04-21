@@ -1,0 +1,48 @@
+name: Docs
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Build & deploy DocC
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v6
+
+      - name: Build DocC static site
+        run: |
+          swift package --allow-writing-to-directory docs \
+            generate-documentation \
+            --target SwiftXCUIPageMacros \
+            --disable-indexing \
+            --transform-for-static-hosting \
+            --hosting-base-path swift-xcui-page-macros \
+            --output-path docs
+          echo '<script>window.location.href += "/documentation/swiftxcuipagemacros"</script>' > docs/index.html
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: docs
+
+      - id: deployment
+        name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v5
