@@ -1,0 +1,44 @@
+/// The XCUIElement query type used to locate an element in the app hierarchy.
+public enum ElementType: Sendable {
+  case textField
+  case secureTextField
+  case textView
+  case searchField
+  case button
+  case staticText
+  case image
+  case cell
+  case other
+  case any
+  case toggle
+  case slider
+  case stepper
+  case segmentedControl
+  case datePicker
+  case picker
+  case pickerWheel
+  case scrollView
+  case table
+  case collectionView
+  case outline
+  case navigationBar
+  case tabBar
+  case tab
+  case toolbar
+  case activityIndicator
+  case progressIndicator
+  case alert
+  case sheet
+  case popover
+  case menu
+  case menuItem
+  case menuBar
+  case window
+  case link
+  case webView
+  case checkBox
+  case radioButton
+  case comboBox
+  case popUpButton
+  case disclosureTriangle
+}
