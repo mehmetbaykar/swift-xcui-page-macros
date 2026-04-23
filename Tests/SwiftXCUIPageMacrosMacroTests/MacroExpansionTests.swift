@@ -543,6 +543,46 @@
       }
     }
 
+    @Test
+    func elementRejectsNonLiteralActions() {
+      assertMacro {
+        """
+        @Element(.button, .id("submit"), actions: buttonActions)
+        var submitButton: XCUIElement
+        """
+      } diagnostics: {
+        """
+        @Element(.button, .id("submit"), actions: buttonActions)
+                                                  ┬────────────
+                                                  ╰─ 🛑 `actions:` must contain valid ElementAction members
+                                                     ✏️ Replace with [.tap]
+        var submitButton: XCUIElement
+        """
+      } fixes: {
+        """
+        @Element(.button, .id("submit"), actions: [.tap])
+        var submitButton: XCUIElement
+        """
+      } expansion: {
+        """
+        var submitButton: XCUIElement {
+            @MainActor
+            get {
+                _scope.buttons.matching(identifier: "submit").firstMatch
+            }
+        }
+
+        /// Taps the `submitButton` element.
+        @discardableResult
+        @MainActor
+        func tapSubmitButton() -> Self {
+            submitButton.tap()
+            return self
+        }
+        """
+      }
+    }
+
     // MARK: - Locator variants
 
     @Test
@@ -615,6 +655,38 @@
             @MainActor
             get {
                 _scope.buttons.matching(identifier: "ok").element(boundBy: 1)
+            }
+        }
+        """
+      }
+    }
+
+    @Test
+    func elementRejectsNonLiteralLocatorIndex() {
+      assertMacro {
+        """
+        @Element(.button, .id("ok", index: selectedIndex), actions: [])
+        var secondOk: XCUIElement
+        """
+      } diagnostics: {
+        """
+        @Element(.button, .id("ok", index: selectedIndex), actions: [])
+                          ┬──────────────────────────────
+                          ╰─ 🛑 Second argument must be a Locator expression (for example, .id("login"))
+                             ✏️ Replace with .id("<#identifier#>")
+        var secondOk: XCUIElement
+        """
+      } fixes: {
+        """
+        @Element(.button, .id("<#identifier#>"), actions: [])
+        var secondOk: XCUIElement
+        """
+      } expansion: {
+        """
+        var secondOk: XCUIElement {
+            @MainActor
+            get {
+                _scope.buttons.matching(identifier: "<#identifier#>").firstMatch
             }
         }
         """

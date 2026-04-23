@@ -115,7 +115,75 @@ struct PageNavigationTests {
       } else {
         Issue.record("Expected .exists expectation, got \(error.underlying.expectation)")
       }
-      #expect(recorder.events.filter { $0 == "attempt" }.count == retries + 1)
+      #expect(recorder.events == ["attempt", "attempt", "attempt"])
+    }
+  }
+
+  @Test
+  func openVerifiesOnlyAfterReadinessProbeSucceeds() throws {
+    let recorder = VerificationRecorder()
+    let application = ApplicationSession()
+    let origin = LinearOriginPage(app: application, recorder: recorder)
+    var readinessChecks = 0
+
+    let destination = try PageNavigation.performOpen(
+      using: origin.app,
+      origin: origin,
+      timeout: nil,
+      retries: 2,
+      backoff: 0,
+      file: #filePath,
+      line: #line,
+      perform: {
+        recorder.events.append("attempt")
+      },
+      destination: { application, _ in
+        LinearDestinationPage(app: application, recorder: recorder)
+      },
+      verify: { destination, timeout, file, line in
+        destination.verify(timeout: timeout, file: file, line: line)
+      },
+      existsCheck: { _ in
+        readinessChecks += 1
+        return readinessChecks == 3
+      }
+    )
+
+    #expect(destination.app === origin.app)
+    #expect(readinessChecks == 3)
+    #expect(recorder.events == ["attempt", "attempt", "attempt", "linearDestination"])
+  }
+
+  @Test
+  func openWithoutRetriesDoesNotVerifyWhenReadinessProbeFails() {
+    let recorder = VerificationRecorder()
+    let application = ApplicationSession()
+    let origin = LinearOriginPage(app: application, recorder: recorder)
+
+    do {
+      _ = try PageNavigation.performOpen(
+        using: origin.app,
+        origin: origin,
+        timeout: nil,
+        retries: 0,
+        backoff: 0,
+        file: #filePath,
+        line: #line,
+        perform: {
+          recorder.events.append("attempt")
+        },
+        destination: { application, _ in
+          LinearDestinationPage(app: application, recorder: recorder)
+        },
+        verify: { destination, timeout, file, line in
+          destination.verify(timeout: timeout, file: file, line: line)
+        },
+        existsCheck: { _ in false }
+      )
+      Issue.record("Expected PageNavigation.performOpen to throw OpenFailure")
+    } catch {
+      #expect(error.attempts == 1)
+      #expect(recorder.events == ["attempt"])
     }
   }
 }

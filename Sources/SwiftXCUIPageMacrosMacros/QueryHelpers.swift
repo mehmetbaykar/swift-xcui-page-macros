@@ -39,9 +39,10 @@ func parseLocator(from argArray: [LabeledExprSyntax]) throws -> ParsedLocator? {
 
 func parseActions(from argArray: [LabeledExprSyntax]) throws -> [String]? {
   for arg in argArray {
-    guard arg.label?.text == "actions",
-      let arrayExpr = arg.expression.as(ArrayExprSyntax.self)
-    else { continue }
+    guard arg.label?.text == "actions" else { continue }
+    guard let arrayExpr = arg.expression.as(ArrayExprSyntax.self) else {
+      throw invalidActionDiagnostic(for: arg.expression)
+    }
     return try arrayExpr.elements.map { element in
       guard let member = element.expression.as(MemberAccessExprSyntax.self) else {
         throw invalidActionDiagnostic(for: arg.expression)
@@ -94,11 +95,11 @@ func parseLocatorExpr(_ expr: ExprSyntax) throws -> ParsedLocator {
     }
     var index: Int? = nil
     for arg in callArgs.dropFirst() {
-      if arg.label?.text == "index",
-        let intLit = arg.expression.as(IntegerLiteralExprSyntax.self)
-      {
-        index = Int(intLit.literal.text)
-      }
+      guard arg.label?.text == "index" else { continue }
+      guard let intLit = arg.expression.as(IntegerLiteralExprSyntax.self),
+        let parsedIndex = Int(intLit.literal.text)
+      else { throw invalidLocatorDiagnostic(for: expr) }
+      index = parsedIndex
     }
     switch caseName {
     case "id": return .id(str, index: index)

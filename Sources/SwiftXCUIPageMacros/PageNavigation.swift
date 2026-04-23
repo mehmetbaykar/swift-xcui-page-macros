@@ -85,10 +85,9 @@
         action()
         let destination = build(application, origin)
         lastDestination = destination
-        _ = verify(destination, timeout, file, line)
 
-        if existsCheck(destination) {
-          return destination
+        if waitUntilReady(destination, timeout: timeout, existsCheck: existsCheck) {
+          return verify(destination, timeout, file, line)
         }
 
         if attempt < totalAttempts && backoff > 0 {
@@ -107,6 +106,25 @@
           expectation: .exists
         )
       )
+    }
+
+    private static func waitUntilReady<Destination>(
+      _ destination: Destination,
+      timeout: TimeInterval?,
+      existsCheck: (Destination) -> Bool
+    ) -> Bool {
+      if existsCheck(destination) { return true }
+      guard let timeout, timeout > 0 else { return false }
+
+      let deadline = Date().addingTimeInterval(timeout)
+      while Date() < deadline {
+        let interval = min(0.05, max(0, deadline.timeIntervalSinceNow))
+        if interval > 0 {
+          RunLoop.current.run(until: Date().addingTimeInterval(interval))
+        }
+        if existsCheck(destination) { return true }
+      }
+      return false
     }
 
     @discardableResult
@@ -149,7 +167,7 @@
           destination.verifyDefaultScreen(timeout: timeout, file: file, line: line)
         },
         existsCheck: { destination in
-          retries == 0 || destination.isReady()
+          destination.isReady()
         }
       )
     }
@@ -181,7 +199,7 @@
           destination.verifyDefaultScreen(timeout: timeout, file: file, line: line)
         },
         existsCheck: { destination in
-          retries == 0 || destination.isReady()
+          destination.isReady()
         }
       )
     }
@@ -211,7 +229,7 @@
           destination.verifyDefaultScreen(timeout: timeout, file: file, line: line)
         },
         existsCheck: { destination in
-          retries == 0 || destination.isReady()
+          destination.isReady()
         }
       )
     }
